@@ -5,7 +5,7 @@ import {
   Get,
   Param,
   Post,
-  Patch,
+  Put,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
@@ -29,7 +29,7 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   update(@Param('id') id: string, @Body() user: Partial<User>) {
     return this.usersService.update(id, user);
   }
