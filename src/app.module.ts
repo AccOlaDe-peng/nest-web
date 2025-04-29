@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { databaseConfig } from './database/database.config';
@@ -9,9 +10,18 @@ import { ResponseInterceptor } from './interceptors/response.interceptor';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { CacheInterceptor } from './interceptors/cache.interceptor';
 import { FileLoggerService } from './services/logger.service';
+import configuration from './config/configuration';
 
 @Module({
-  imports: [TypeOrmModule.forRoot(databaseConfig), UsersModule, AuthModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configuration],
+    }),
+    TypeOrmModule.forRoot(databaseConfig),
+    UsersModule,
+    AuthModule,
+  ],
   providers: [
     {
       provide: APP_FILTER,
