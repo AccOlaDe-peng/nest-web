@@ -7,6 +7,7 @@ import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { ResponseInterceptor } from './interceptors/response.interceptor';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
+import { CacheInterceptor } from './interceptors/cache.interceptor';
 
 @Module({
   imports: [TypeOrmModule.forRoot(databaseConfig), UsersModule, AuthModule],
@@ -22,6 +23,10 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CacheInterceptor,
     },
   ],
 })
