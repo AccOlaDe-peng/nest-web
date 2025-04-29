@@ -8,6 +8,7 @@ import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { ResponseInterceptor } from './interceptors/response.interceptor';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { CacheInterceptor } from './interceptors/cache.interceptor';
+import { FileLoggerService } from './services/logger.service';
 
 @Module({
   imports: [TypeOrmModule.forRoot(databaseConfig), UsersModule, AuthModule],
@@ -28,6 +29,7 @@ import { CacheInterceptor } from './interceptors/cache.interceptor';
       provide: APP_INTERCEPTOR,
       useClass: CacheInterceptor,
     },
+    FileLoggerService,
   ],
 })
 export class AppModule {}
