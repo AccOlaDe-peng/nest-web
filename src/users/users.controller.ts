@@ -10,9 +10,12 @@ import {
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
 import { ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { UseGuards } from '@nestjs/common';
 
 @ApiTags('用户管理')
 @Controller('users')
+@UseGuards(AuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
