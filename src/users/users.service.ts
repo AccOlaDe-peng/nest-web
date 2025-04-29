@@ -1,41 +1,40 @@
-import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
-  private readonly users: CreateUserDto[] = [];
+  constructor(
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+  ) {}
 
-  findAll(): CreateUserDto[] {
-    return this.users;
+  async findAll(): Promise<User[]> {
+    return this.usersRepository.find();
   }
 
-  findOne(id: string): CreateUserDto | undefined {
-    return this.users.find((user) => user.id === parseInt(id));
-  }
-
-  create(createUserDto: CreateUserDto): CreateUserDto {
-    createUserDto.id = this.users.length + 1;
-    this.users.push(createUserDto);
-    return createUserDto;
-  }
-
-  update(id: string, updateUserDto: UpdateUserDto): CreateUserDto | undefined {
-    const userIndex = this.users.findIndex((user) => user.id === parseInt(id));
-    if (userIndex === -1) {
-      return undefined;
+  async findOne(id: number): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
     }
-    const updatedUser = { ...this.users[userIndex], ...updateUserDto };
-    this.users[userIndex] = updatedUser;
-    return updatedUser;
+    return user;
   }
 
-  remove(id: string): boolean {
-    const userIndex = this.users.findIndex((user) => user.id === parseInt(id));
-    if (userIndex === -1) {
-      return false;
-    }
-    this.users.splice(userIndex, 1);
-    return true;
+  async create(user: Partial<User>): Promise<User> {
+    const newUser = this.usersRepository.create(user);
+    return this.usersRepository.save(newUser);
+  }
+
+  async update(id: number, user: Partial<User>): Promise<User> {
+    await this.findOne(id); // 确保用户存在
+    await this.usersRepository.update(id, user);
+    return this.findOne(id);
+  }
+
+  async remove(id: number): Promise<void> {
+    await this.findOne(id); // 确保用户存在
+    await this.usersRepository.delete(id);
   }
 }
