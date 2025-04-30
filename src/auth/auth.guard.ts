@@ -1,25 +1,49 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { Observable } from 'rxjs';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+
+interface JwtPayload {
+  sub: string;
+  username: string;
+  [key: string]: any;
+}
+
+interface RequestWithUser extends Request {
+  user: JwtPayload;
+}
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
-    const request = context.switchToHttp().getRequest<Request>();
-    return this.validateRequest(request);
+  constructor(private jwtService: JwtService) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest<RequestWithUser>();
+    const token = this.extractTokenFromHeader(request);
+
+    if (!token) {
+      throw new UnauthorizedException('未提供身份验证令牌');
+    }
+
+    try {
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
+        secret: 'nest_secret_key', // 与AuthModule中的secret保持一致
+      });
+
+      // 将用户信息添加到请求对象，便于后续处理
+      request.user = payload;
+    } catch {
+      throw new UnauthorizedException('无效的身份验证令牌');
+    }
+    return true;
   }
 
-  private validateRequest(request: Request): boolean {
-    console.log('进入路由守卫校验逻辑', request.headers.authorization);
-    // 实现您的认证逻辑
-    // 例如检查请求头中的 token
-    // const token = request.headers.authorization;
-    // if (!token) {
-    //   return false;
-    // }
-    // 这里可以添加更多的验证逻辑
-    return true;
+  private extractTokenFromHeader(request: Request): string | undefined {
+    const [type, token] = request.headers.authorization?.split(' ') ?? [];
+    return type === 'Bearer' ? token : undefined;
   }
 }
