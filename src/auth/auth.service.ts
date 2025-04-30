@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
@@ -32,18 +32,18 @@ export class AuthService {
     }
   }
 
-  async login(username: string, password: string) {
-    const user = await this.validateUser(username, password);
-
-    if (!user) {
-      throw new UnauthorizedException('用户名或密码错误');
-    }
+  async login(username: string) {
+    // 这个方法使用用户名生成JWT令牌
+    const user = await this.usersService.findByUsername(username);
 
     const payload = { sub: user.id, username: user.username };
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...result } = user;
+
     return {
       access_token: this.jwtService.sign(payload),
-      user,
+      user: result,
     };
   }
 
