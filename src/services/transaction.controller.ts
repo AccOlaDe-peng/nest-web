@@ -1,7 +1,7 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { TransactionService } from './transaction.service';
 import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
-import { AuthGuard } from '../auth/auth.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 class TransferDto {
   fromUserId: string;
@@ -20,7 +20,7 @@ class CreateUsersDto {
 
 @ApiTags('事务管理')
 @Controller('transactions')
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard)
 export class TransactionController {
   constructor(private readonly transactionService: TransactionService) {}
 
