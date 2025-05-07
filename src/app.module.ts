@@ -12,6 +12,7 @@ import { CacheInterceptor } from './interceptors/cache.interceptor';
 import { FileLoggerService } from './services/logger.service';
 import configuration from './config/configuration';
 import { TransactionModule } from './services/transaction.module';
+import { TodoListModule } from './todolist/todolist.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { TransactionModule } from './services/transaction.module';
     UsersModule,
     AuthModule,
     TransactionModule,
+    TodoListModule,
   ],
   providers: [
     {
