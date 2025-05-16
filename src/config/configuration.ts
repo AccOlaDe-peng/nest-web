@@ -4,11 +4,7 @@ import * as dotenv from 'dotenv';
 dotenv.config({ path: `.env.${process.env.NODE_ENV || 'development'}` });
 
 export interface DatabaseConfig {
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-  database: string;
+  uri: string;
 }
 
 export interface JwtConfig {
@@ -23,11 +19,7 @@ export interface AppConfig {
 
 export default registerAs('config', () => {
   const databaseConfig: DatabaseConfig = {
-    host: process.env.DB_HOST! || 'localhost',
-    port: parseInt(process.env.DB_PORT!, 10) || 5432,
-    username: process.env.DB_USERNAME! || 'postgres',
-    password: process.env.DB_PASSWORD! || 'postgres',
-    database: process.env.DB_DATABASE! || 'nest_web',
+    uri: process.env.MONGODB_URI! || 'mongodb://localhost:27017/nest_web',
   };
 
   const jwtConfig: JwtConfig = {

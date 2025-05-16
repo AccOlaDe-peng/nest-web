@@ -1,17 +1,11 @@
 import {
   Entity,
   Column,
-  PrimaryGeneratedColumn,
+  ObjectIdColumn,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsOptional,
-  IsBoolean,
-  IsNumber,
-} from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 @Entity('users')
@@ -20,7 +14,7 @@ export class User {
     description: '用户唯一标识符',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
-  @PrimaryGeneratedColumn('uuid')
+  @ObjectIdColumn()
   id: string;
 
   @ApiProperty({ description: '用户名', example: 'john_doe' })
@@ -47,11 +41,6 @@ export class User {
   @Column({ default: true })
   @IsBoolean()
   isActive: boolean;
-
-  @ApiProperty({ description: '账户余额', example: 1000 })
-  @Column({ type: 'float', default: 0 })
-  @IsNumber()
-  balance: number;
 
   @ApiProperty({ description: '创建时间' })
   @CreateDateColumn()
