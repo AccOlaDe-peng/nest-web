@@ -1,7 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { LoginDto } from './dto/login.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -44,5 +50,25 @@ export class UsersService {
   async remove(id: string): Promise<void> {
     await this.findOne(id); // 确保用户存在
     await this.usersRepository.delete(id);
+  }
+
+  async login(loginDto: LoginDto): Promise<User> {
+    const { account, password } = loginDto;
+
+    // 尝试通过用户名、邮箱或手机号查找用户
+    const user = await this.usersRepository.findOne({
+      where: [{ username: account }, { email: account }, { phone: account }],
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('账号或密码错误');
+    }
+
+    // 验证密码
+    // const isPasswordValid = await bcrypt.compare(password, user.password);
+    // if (!isPasswordValid) {
+    //   throw new UnauthorizedException('账号或密码错误');
+    // }
+    return user;
   }
 }

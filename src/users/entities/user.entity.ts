@@ -5,7 +5,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { IsEmail, IsNotEmpty, IsOptional, IsBoolean } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsBoolean,
+  IsPhoneNumber,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 @Entity('users')
@@ -32,10 +38,20 @@ export class User {
     example: 'john@example.com',
     required: false,
   })
-  @Column({ length: 100, nullable: true })
+  @Column({ length: 100, nullable: true, unique: true })
   @IsOptional()
   @IsEmail()
   email: string;
+
+  @ApiProperty({
+    description: '手机号',
+    example: '+8613800138000',
+    required: false,
+  })
+  @Column({ length: 20, nullable: true, unique: true })
+  @IsOptional()
+  @IsPhoneNumber()
+  phone: string;
 
   @ApiProperty({ description: '用户是否激活', example: true })
   @Column({ default: true })
