@@ -11,7 +11,6 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { CacheInterceptor } from './interceptors/cache.interceptor';
 import { FileLoggerService } from './services/logger.service';
 import configuration from './config/configuration';
-import { TransactionModule } from './services/transaction.module';
 
 @Module({
   imports: [
@@ -22,7 +21,6 @@ import { TransactionModule } from './services/transaction.module';
     TypeOrmModule.forRoot(databaseConfig),
     UsersModule,
     AuthModule,
-    TransactionModule,
   ],
   providers: [
     {
