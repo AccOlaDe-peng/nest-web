@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -54,6 +55,36 @@ export class UsersService {
   }
 
   async create(user: Partial<User>): Promise<User> {
+    // 检查邮箱是否已存在
+    if (user.email) {
+      const existingUserWithEmail = await this.usersRepository.findOne({
+        where: { email: user.email },
+      });
+      if (existingUserWithEmail) {
+        throw new ConflictException('邮箱已被注册');
+      }
+    }
+
+    // 检查用户名是否已存在
+    if (user.username) {
+      const existingUserWithUsername = await this.usersRepository.findOne({
+        where: { username: user.username },
+      });
+      if (existingUserWithUsername) {
+        throw new ConflictException('用户名已被使用');
+      }
+    }
+
+    // 检查手机号是否已存在
+    if (user.phone) {
+      const existingUserWithPhone = await this.usersRepository.findOne({
+        where: { phone: user.phone },
+      });
+      if (existingUserWithPhone) {
+        throw new ConflictException('手机号已被注册');
+      }
+    }
+
     const encryptedUser = {
       ...user,
       password: user.password
@@ -61,13 +92,30 @@ export class UsersService {
         : undefined,
     };
     const newUser = this.usersRepository.create(encryptedUser);
-    const savedUser = await this.usersRepository.save(newUser);
-    return {
-      ...savedUser,
-      password: savedUser.password
-        ? this.encryptionService.decrypt(savedUser.password)
-        : undefined,
-    };
+    try {
+      const savedUser = await this.usersRepository.save(newUser);
+      return {
+        ...savedUser,
+        password: savedUser.password
+          ? this.encryptionService.decrypt(savedUser.password)
+          : undefined,
+      };
+    } catch (error) {
+      // MongoDB 复制键错误
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        ((error as { code?: number }).code === 11000 ||
+          ((error as { message?: string }).message &&
+            typeof (error as { message: string }).message === 'string' &&
+            (error as { message: string }).message.includes('duplicate key')))
+      ) {
+        throw new ConflictException(
+          '用户信息已存在，请检查用户名、邮箱或手机号是否重复',
+        );
+      }
+      throw error;
+    }
   }
 
   async update(id: string, user: Partial<User>): Promise<User> {
@@ -91,9 +139,20 @@ export class UsersService {
     const { account, password } = loginDto;
 
     // 尝试通过用户名查找用户
-    const user = await this.usersRepository.findOne({
+    let user = await this.usersRepository.findOne({
       where: { username: account },
     });
+
+    if (!user) {
+      user = await this.usersRepository.findOne({
+        where: { email: account },
+      });
+    }
+    if (!user) {
+      user = await this.usersRepository.findOne({
+        where: { phone: account },
+      });
+    }
 
     if (!user) {
       throw new UnauthorizedException('账号或密码错误');
@@ -103,8 +162,13 @@ export class UsersService {
     if (!user.password) {
       throw new UnauthorizedException('账号或密码错误');
     }
+
     const decryptedPassword = this.encryptionService.decrypt(user.password);
-    if (decryptedPassword !== password) {
+    const decryptedPassword2 = this.encryptionService.decrypt(password);
+    console.log(decryptedPassword);
+    console.log(decryptedPassword2);
+    // 前端应该已经使用公钥加密了密码
+    if (password !== decryptedPassword) {
       throw new UnauthorizedException('账号或密码错误');
     }
 
