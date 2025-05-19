@@ -11,6 +11,7 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { CacheInterceptor } from './interceptors/cache.interceptor';
 import { FileLoggerService } from './services/logger.service';
 import configuration from './config/configuration';
+import { ServicesModule } from './services/services.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import configuration from './config/configuration';
       load: [configuration],
     }),
     TypeOrmModule.forRoot(databaseConfig),
+    ServicesModule,
     UsersModule,
     AuthModule,
   ],

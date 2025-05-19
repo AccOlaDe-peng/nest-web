@@ -7,17 +7,24 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { LoginDto } from './dto/login.dto';
-import * as bcrypt from 'bcrypt';
+import { EncryptionService } from '../services/encryption.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private encryptionService: EncryptionService,
   ) {}
 
   async findAll(): Promise<User[]> {
-    return this.usersRepository.find();
+    const users = await this.usersRepository.find();
+    return users.map((user) => ({
+      ...user,
+      password: user.password
+        ? this.encryptionService.decrypt(user.password)
+        : undefined,
+    }));
   }
 
   async findOne(id: string): Promise<User> {
@@ -25,7 +32,12 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    return user;
+    return {
+      ...user,
+      password: user.password
+        ? this.encryptionService.decrypt(user.password)
+        : undefined,
+    };
   }
 
   async findByUsername(username: string): Promise<User> {
@@ -33,17 +45,40 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException(`User with username ${username} not found`);
     }
-    return user;
+    return {
+      ...user,
+      password: user.password
+        ? this.encryptionService.decrypt(user.password)
+        : undefined,
+    };
   }
 
   async create(user: Partial<User>): Promise<User> {
-    const newUser = this.usersRepository.create(user);
-    return this.usersRepository.save(newUser);
+    const encryptedUser = {
+      ...user,
+      password: user.password
+        ? this.encryptionService.encrypt(user.password)
+        : undefined,
+    };
+    const newUser = this.usersRepository.create(encryptedUser);
+    const savedUser = await this.usersRepository.save(newUser);
+    return {
+      ...savedUser,
+      password: savedUser.password
+        ? this.encryptionService.decrypt(savedUser.password)
+        : undefined,
+    };
   }
 
   async update(id: string, user: Partial<User>): Promise<User> {
     await this.findOne(id); // 确保用户存在
-    await this.usersRepository.update(id, user);
+    const encryptedUser = {
+      ...user,
+      password: user.password
+        ? this.encryptionService.encrypt(user.password)
+        : undefined,
+    };
+    await this.usersRepository.update(id, encryptedUser);
     return this.findOne(id);
   }
 
@@ -55,9 +90,9 @@ export class UsersService {
   async login(loginDto: LoginDto): Promise<User> {
     const { account, password } = loginDto;
 
-    // 尝试通过用户名、邮箱或手机号查找用户
+    // 尝试通过用户名查找用户
     const user = await this.usersRepository.findOne({
-      where: [{ username: account }, { email: account }, { phone: account }],
+      where: { username: account },
     });
 
     if (!user) {
@@ -65,10 +100,17 @@ export class UsersService {
     }
 
     // 验证密码
-    // const isPasswordValid = await bcrypt.compare(password, user.password);
-    // if (!isPasswordValid) {
-    //   throw new UnauthorizedException('账号或密码错误');
-    // }
-    return user;
+    if (!user.password) {
+      throw new UnauthorizedException('账号或密码错误');
+    }
+    const decryptedPassword = this.encryptionService.decrypt(user.password);
+    if (decryptedPassword !== password) {
+      throw new UnauthorizedException('账号或密码错误');
+    }
+
+    return {
+      ...user,
+      password: undefined, // 不返回密码
+    };
   }
 }

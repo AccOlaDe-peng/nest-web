@@ -29,9 +29,9 @@ export class User {
   username: string;
 
   @ApiProperty({ description: '密码', example: 'password123' })
-  @Column({ length: 100 })
-  @IsNotEmpty()
-  password: string;
+  @Column({ length: 100, nullable: true })
+  @IsOptional()
+  password?: string;
 
   @ApiProperty({
     description: '电子邮箱',
@@ -41,7 +41,7 @@ export class User {
   @Column({ length: 100, nullable: true, unique: true })
   @IsOptional()
   @IsEmail()
-  email: string;
+  email?: string;
 
   @ApiProperty({
     description: '手机号',
@@ -51,7 +51,7 @@ export class User {
   @Column({ length: 20, nullable: true, unique: true })
   @IsOptional()
   @IsPhoneNumber()
-  phone: string;
+  phone?: string;
 
   @ApiProperty({ description: '用户是否激活', example: true })
   @Column({ default: true })
