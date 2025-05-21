@@ -131,16 +131,27 @@ export class EncryptionService {
    */
   decrypt(encryptedData: string): string {
     try {
-      const buffer = Buffer.from(encryptedData, 'base64');
-      const decrypted = crypto.privateDecrypt(
-        {
-          key: this.privateKey,
-          padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-          oaepHash: 'sha256',
-        },
-        buffer,
-      );
-      return decrypted.toString('utf8');
+      const plainText = crypto
+        .privateDecrypt(
+          {
+            key: this.privateKey,
+            padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+            oaepHash: 'sha256',
+          },
+          Buffer.from(encryptedData, 'base64'),
+        )
+        .toString('utf8');
+      return plainText;
+      // const buffer = Buffer.from(encryptedData, 'base64');
+      // const decrypted = crypto.privateDecrypt(
+      //   {
+      //     key: this.privateKey,
+      //     padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+      //     oaepHash: 'sha256',
+      //   },
+      //   buffer,
+      // );
+      // return decrypted.toString('utf8');
     } catch (error) {
       // 记录详细错误信息
       const errorMessage = error instanceof Error ? error.message : '未知错误';

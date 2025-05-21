@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { LoginDto } from './dto/login.dto';
+import * as bcrypt from 'bcrypt';
 import { EncryptionService } from '../services/encryption.service';
 
 @Injectable()
@@ -84,22 +85,21 @@ export class UsersService {
         throw new ConflictException('手机号已被注册');
       }
     }
+    // 哈希
+    const saltRounds = 12;
+    // 确保 password 不为 undefined
+    const hash = user.password
+      ? await bcrypt.hash(user.password, saltRounds)
+      : undefined;
 
-    const encryptedUser = {
+    const encryptedUser: Partial<User> = {
       ...user,
-      password: user.password
-        ? this.encryptionService.encrypt(user.password)
-        : undefined,
+      password: hash,
     };
     const newUser = this.usersRepository.create(encryptedUser);
     try {
       const savedUser = await this.usersRepository.save(newUser);
-      return {
-        ...savedUser,
-        password: savedUser.password
-          ? this.encryptionService.decrypt(savedUser.password)
-          : undefined,
-      };
+      return savedUser;
     } catch (error) {
       // MongoDB 复制键错误
       if (
@@ -163,12 +163,13 @@ export class UsersService {
       throw new UnauthorizedException('账号或密码错误');
     }
 
-    const decryptedPassword = this.encryptionService.decrypt(user.password);
-    const decryptedPassword2 = this.encryptionService.decrypt(password);
-    console.log(decryptedPassword);
-    console.log(decryptedPassword2);
+    const decryptedPassword = this.encryptionService.decrypt(password);
+    const isPasswordValid = await bcrypt.compare(
+      decryptedPassword,
+      user.password,
+    );
     // 前端应该已经使用公钥加密了密码
-    if (password !== decryptedPassword) {
+    if (!isPasswordValid) {
       throw new UnauthorizedException('账号或密码错误');
     }
 

@@ -26,7 +26,7 @@ export class UsersController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   create(@Body() user: Partial<User>) {
     return this.usersService.create(user);
   }
